@@ -1,7 +1,17 @@
 :root {
+    --primary: rgb(255, 255, 255);
+    --primary-text: rgb(0, 0, 0);
+
     --secondary: rgb(255, 102, 0);
-    --secondary-active: rgb(230, 90, 0);
+    --secondary-hover: rgb(242, 96, 0);
+    --secondary-active: rgb(225, 85, 0);
     --secondary-text: rgb(255, 255, 255);
+
+    --time-text: rgb(89, 89, 89);
+
+    --outline-hover: rgba(0, 0, 0, 0.05);
+    --outline-active: rgba(0, 0, 0, 0.1);
+
     --default-radius: 8px;
 }
 
@@ -25,6 +35,14 @@ body {
 
 body > section {
     width: 100%;
+}
+
+button:hover {
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
 }
 
 .divider {
@@ -64,7 +82,7 @@ body > section {
 }
 
 .task-start:hover {
-    cursor: pointer;
+    background-color: var(--secondary-hover);
 }
 
 .task-start:active {
@@ -82,6 +100,13 @@ body > section {
     justify-content: flex-end;
     align-items: center;
     gap: 0.75rem;
+    font-size: 1rem;
+}
+
+.active-task-actions > button {
+    font-size: inherit;
+    padding: 0.3rem 0.75rem;
+    border-radius: var(--default-radius);
 }
 
 .active-task-info {
@@ -89,4 +114,46 @@ body > section {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+}
+
+.active-task-info > time {
+    font-size: 1.4rem;
+    color: var(--time-text);
+}
+
+.task-stop {
+    font-size: inherit;
+    border: 1px solid var(--secondary);
+    color: var(--secondary);
+    background-color: var(--primary);
+}
+
+.task-stop:hover {
+    background-color: var(--outline-hover);
+}
+
+.task-stop:active {
+    background-color: var(--outline-active);
+}
+
+.history-title {
+    margin-bottom: 0.7rem;
+}
+
+.history-date {
+    margin-top: 0.5rem;
+    margin-bottom: 0.3rem;
+    font-size: 1.2rem;
+}
+
+.history-task-list {
+    list-style: none;
+    font-size: 1.1rem;
+}
+
+.history-task-list > li {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 0.2rem;
 }

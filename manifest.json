@@ -8,5 +8,9 @@
   "browser_action": {
     "default_title": "Task Tracker",
     "default_popup": "popup.html"
-  }
+  },
+
+  "permissions": [
+    "storage"
+  ]
 }
