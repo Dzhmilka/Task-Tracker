@@ -7,6 +7,10 @@
     --secondary-active: rgb(225, 85, 0);
     --secondary-text: rgb(255, 255, 255);
 
+    --danger: rgb(220, 38, 38);
+    --danger-hover: rgb(200, 30, 30);
+    --danger-active: rgb(170, 25, 25);
+
     --time-text: rgb(89, 89, 89);
 
     --outline-hover: rgba(0, 0, 0, 0.05);
@@ -27,7 +31,7 @@
 
 body {
     padding: 1rem;
-    width: 350px;
+    width: 400px;
     display: flex;
     flex-direction: column;
     font-family: "Inter", sans-serif;
@@ -59,6 +63,10 @@ button:disabled {
     width: 100%;
 }
 
+.task-input-form.disabled {
+    opacity: 0.6;
+}
+
 .task-input {
     font-size: inherit;
     flex: 1;
@@ -81,11 +89,11 @@ button:disabled {
     border: none;
 }
 
-.task-start:hover {
+.task-start:hover .task-start:not(:disabled) {
     background-color: var(--secondary-hover);
 }
 
-.task-start:active {
+.task-start:active .task-start:not(:disabled) {
     background-color: var(--secondary-active);
 }
 
@@ -104,6 +112,7 @@ button:disabled {
 }
 
 .active-task-actions > button {
+    font-weight: 500;
     font-size: inherit;
     padding: 0.3rem 0.75rem;
     border-radius: var(--default-radius);
@@ -116,24 +125,74 @@ button:disabled {
     align-items: center;
 }
 
+.active-task-info > h2 {
+    min-width: 0;
+    margin-right: 0.3rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .active-task-info > time {
     font-size: 1.4rem;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
     color: var(--time-text);
 }
 
-.task-stop {
-    font-size: inherit;
+.task-pause {
     border: 1px solid var(--secondary);
     color: var(--secondary);
     background-color: var(--primary);
 }
 
-.task-stop:hover {
+.task-pause:hover {
     background-color: var(--outline-hover);
 }
 
-.task-stop:active {
+.task-pause:active {
     background-color: var(--outline-active);
+}
+
+.task-resume {
+    color: var(--secondary-text);
+    background-color: var(--secondary);
+    border: 1px solid var(--secondary);
+}
+
+.task-resume:hover {
+    background-color: var(--secondary-hover);
+}
+
+.task-resume:active {
+    background-color: var(--secondary-active);
+}
+
+.task-save {
+    border: 1px solid var(--secondary);
+    background-color: var(--primary);
+    color: var(--secondary)
+}
+
+.task-save:hover {
+    background-color: var(--outline-hover);
+}
+
+.task-save:active {
+    background-color: var(--outline-active);
+}
+
+.task-discard {
+    background-color: var(--danger);
+    color: var(--primary);
+    border: 1px solid var(--danger);
+}
+
+.task-discard:hover {
+    background-color: var(--danger-hover);
+}
+
+.task-discard:active {
+    background-color: var(--danger-active);
 }
 
 .history-title {
