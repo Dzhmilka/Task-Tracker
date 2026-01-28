@@ -54,6 +54,34 @@ function showTaskPlaceholder() {
     noActiveTask.style.display = ""
 }
 
+function hideHistoryPlaceholder() {
+    historyEmpty.style.display = "none"
+}
+
+function showHistoryPlaceholder() {
+    historyEmpty.style.display = ""
+}
+
+function formatDateLong(date) {
+    return new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+    }).format(date)
+}
+
+function formatTaskDuration(totalMs) {
+    const totalMinutes = Math.floor(totalMs / 60000)
+
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = totalMinutes % 60
+
+    const hh = hours.toString().padStart(2, "0")
+    const mm = minutes.toString().padStart(2, "0")
+
+    return `${hh}:${mm}`
+}
+
 function disableTaskForm() {
     taskInput.disabled = true
     taskStart.disabled = true
@@ -185,6 +213,7 @@ async function saveTask() {
     showTaskPlaceholder()
 
     enableTaskForm()
+    showTasksHistory()
 }
 
 async function discardTask() {
@@ -231,8 +260,56 @@ async function showActiveTask() {
     }
 }
 
+function formatTasksAsHTML(tasksByDays) {
+    const history = Object.values(tasksByDays).map(date => {
+        let dateHTML = `<h3 class="history-date" datetime=${date.taskDatetime}>${date.dateName}</h3>`
+        
+        const tasksList = date.tasks.map(task => {
+            return `<li><span>${task.name}</span><time datetime=${task.duration}>${task.duration}</time>`
+        }).join('')
+        const tasksHTML = `<ul class="history-task-list">${tasksList}</ul>`
+
+        dateHTML += tasksHTML
+        return dateHTML
+    })
+
+    return history.join('')
+}
+
 async function showTasksHistory() {
-    const { historyTasks } = await browser.storage.local.get("historyTasks")
+    const { historyTasks = [] } = await browser.storage.local.get("historyTasks")
+    if (historyTasks.length === 0) {
+        showHistoryPlaceholder()
+        return
+    }
+
+    const tasksByDays = historyTasks.reduce((result, task) => {
+        const taskDate = new Date(task.finishedAt) 
+        const taskDatetime = `${taskDate.getFullYear()}-${taskDate.getMonth() + 1}-${taskDate.getDate()}`
+
+        const taskForHistory = {
+            name: task.name,
+            duration: formatTaskDuration(task.totalMs)
+        } 
+
+        if (!result[taskDatetime]) {
+            const dateName = formatDateLong(taskDate)        
+            result[taskDatetime] = {
+                dateName,
+                taskDatetime,
+                tasks: [taskForHistory]
+            }
+        } else {
+            result[taskDatetime].tasks.push(taskForHistory)            
+        }
+
+        return result
+    }, {})
+
+    const historyHTML = formatTasksAsHTML(tasksByDays)
+
+    hideHistoryPlaceholder()
+    historyContainer.innerHTML = historyHTML
 }
 
 const taskInputForm = document.getElementById("task-input-form")
@@ -250,6 +327,9 @@ const resumeTaskButton = document.getElementById("task-resume")
 const saveTaskButton = document.getElementById("task-save")
 const discardTaskButton = document.getElementById("task-discard")
 
+const historyContainer = document.getElementById("history-container")
+const historyEmpty = document.getElementById("history-empty")
+
 let timeoutId
 
 taskInputForm.addEventListener("submit", startTask)
@@ -259,3 +339,4 @@ discardTaskButton.addEventListener("click", discardTask)
 saveTaskButton.addEventListener("click", saveTask)
 
 showActiveTask()
+showTasksHistory()
