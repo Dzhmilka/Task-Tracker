@@ -29,21 +29,19 @@
         </div>
         <div class="active-task-actions" id="active-task-actions">
             <button class="task-pause" id="task-pause">Pause</button>
-            <button class="task-discard" id="task-discard" style="display: none;">Discard</button>
-            <button class="task-save" id="task-save" style="display: none;">Save</button>
-            <button class="task-resume" id="task-resume" style="display: none;">Resume</button>
+            <button class="task-discard hidden" id="task-discard">Discard</button>
+            <button class="task-save hidden" id="task-save">Save</button>
+            <button class="task-resume hidden" id="task-resume">Resume</button>
         </div>
         
-        <p id="no-active-task" style="display: none; margin: auto;">No active tasks</p>
+        <p class="hidden" id="active-task-placeholder" style="text-align: center;">No active tasks</p>
     </section>
 
     <hr class="divider">
 
     <section>
         <h2 class="history-title">History</h2>
-        <div id="history-container">
-            <p class="history-empty" id="history-empty">Empty</p>
-        </div>
+        <div id="history-container"></div>
     </section>
     <script src="popup.js"></script>
 </body>

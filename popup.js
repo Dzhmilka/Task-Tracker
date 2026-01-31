@@ -1,65 +1,43 @@
-function hidePauseButton() {
-    pauseTaskButton.style.display = "none"
+function setIcon(state) {
+    let path
+
+    switch (state) {
+        case "running":
+            path = {
+                "16": "icons/timer-active-16.png",
+                "32": "icons/timer-active-32.png"
+            }
+            break
+
+        case "paused":
+            path = {
+                "16": "icons/timer-16.png",
+                "32": "icons/timer-32.png"
+            }
+            break
+
+        default:
+            path = {
+                "16": "icons/timer-idle-16.png",
+                "32": "icons/timer-idle-32.png"
+            }
+    }
+
+    browser.browserAction.setIcon({ path })
 }
 
-function showPauseButton() {
-    pauseTaskButton.style.display = ""
+function hideElement(element) {
+    element.classList.add("hidden")
 }
 
-function hideResumeButton() {
-    resumeTaskButton.style.display = "none"
+function showElement(element) {
+    element.classList.remove("hidden")
 }
 
-function showResumeButton() {
-    resumeTaskButton.style.display = ""
-}
-
-function hideSaveButton() {
-    saveTaskButton.style.display = "none"
-}
-
-function showSaveButton() {
-    saveTaskButton.style.display = ""
-}
-
-function hideDiscardButton() {
-    discardTaskButton.style.display = "none"
-}
-
-function showDiscardButton() {
-    discardTaskButton.style.display = ""
-}
-
-function hideActiveTaskInfo() {
-    activeTaskInfo.style.display = "none"
-}
-
-function showActiveTaskInfo() {
-    activeTaskInfo.style.display = ""
-}
-
-function hideActiveTaskActions() {
-    activeTaskActions.style.display = "none"
-}
-
-function showActiveTaskActions() {
-    activeTaskActions.style.display = ""
-}
-
-function hideTaskPlaceholder() {
-    noActiveTask.style.display = "none"
-}
-
-function showTaskPlaceholder() {
-    noActiveTask.style.display = ""
-}
-
-function hideHistoryPlaceholder() {
-    historyEmpty.style.display = "none"
-}
-
-function showHistoryPlaceholder() {
-    historyEmpty.style.display = ""
+function escapeHTML(str) {
+    const div = document.createElement("div")
+    div.textContent = str
+    return div.innerHTML
 }
 
 function formatDateLong(date) {
@@ -70,16 +48,17 @@ function formatDateLong(date) {
     }).format(date)
 }
 
-function formatTaskDuration(totalMs) {
+function formatDurationForHistory(totalMs) {
     const totalMinutes = Math.floor(totalMs / 60000)
 
     const hours = Math.floor(totalMinutes / 60)
     const minutes = totalMinutes % 60
 
-    const hh = hours.toString().padStart(2, "0")
-    const mm = minutes.toString().padStart(2, "0")
+    if (hours === 0) {
+        return `${minutes}m`
+    }
 
-    return `${hh}:${mm}`
+    return `${hours}h ${minutes}m`
 }
 
 function disableTaskForm() {
@@ -99,14 +78,19 @@ function enableTaskForm() {
 async function startTask(event) {
     event.preventDefault()
     const taskName = taskInput.value
-    await browser.storage.local.set({
-        activeTask: {
-            name: taskName,
-            elapsedMs: 0,
-            lastStart: Date.now(),
-            isRunning: true
-        }    
-    })
+
+    if (taskName === "") {
+        return
+    }
+
+    activeTask = {
+        name: taskName,
+        elapsedMs: 0,
+        lastStart: Date.now(),
+        isRunning: true
+    }
+
+    await browser.storage.local.set({ activeTask })
     taskInput.value = ""
     showActiveTask()
 }
@@ -121,29 +105,18 @@ function getTotalElapsedMs(activeTask) {
 
 function startTimer(activeTask) {
     stopTimer()
-
-    const tick = () => {
-        updateTimer(activeTask)
-
-        const now = Date.now()
-        const delay = 1000 - (now % 1000)
-
-        timeoutId = setTimeout(tick, delay)
-    }
-    
-    tick()
+    intervalId = setInterval(() => updateTimer(activeTask), 250)
+    setIcon("running")
 }
 
 function stopTimer() {
-    clearTimeout(timeoutId)
-    timeoutId = null
+    clearInterval(intervalId)
+    intervalId = null
 }
 
 async function pauseTimer() {
     stopTimer()
 
-    const { activeTask } = await browser.storage.local.get("activeTask")
-    
     const now = Date.now()
     const sessionMs = now - activeTask.lastStart
 
@@ -151,24 +124,24 @@ async function pauseTimer() {
     activeTask.lastStart = null
     activeTask.isRunning = false
 
-    hidePauseButton()
-    showResumeButton()
-    showSaveButton()
-    showDiscardButton()
+    hideElement(pauseTaskButton)
+    showElement(resumeTaskButton)
+    showElement(saveTaskButton)
+    showElement(discardTaskButton)
+
+    setIcon("paused")
 
     await browser.storage.local.set({activeTask})
 }
 
 async function resumeTimer() {
-    const { activeTask } = await browser.storage.local.get("activeTask")
-
     activeTask.lastStart = Date.now()
     activeTask.isRunning = true
 
-    showPauseButton()
-    hideResumeButton()
-    hideSaveButton()
-    hideDiscardButton()
+    showElement(pauseTaskButton)
+    hideElement(resumeTaskButton)
+    hideElement(saveTaskButton)
+    hideElement(discardTaskButton)
 
     await browser.storage.local.set({activeTask})
     startTimer(activeTask)
@@ -178,6 +151,7 @@ function updateTimer(activeTask) {
     const elapsedMs = getTotalElapsedMs(activeTask)
 
     const totalSeconds = Math.floor(elapsedMs / 1000)
+
     const hours = Math.floor(totalSeconds / 3600)
     const minutes = Math.floor((totalSeconds % 3600) / 60)
     const seconds = totalSeconds % 60
@@ -187,59 +161,72 @@ function updateTimer(activeTask) {
     const ss = seconds.toString().padStart(2, "0")
 
     activeTaskTime.textContent = `${hh}:${mm}:${ss}` 
-    activeTaskTime.setAttribute("datetime", `PT${hh}H:${mm}M:${ss}S`) 
+    activeTaskTime.setAttribute("datetime", `PT${hours}H${minutes}M${seconds}S`) 
 }
 
 async function saveTask() {
-    const { activeTask } = await browser.storage.local.get("activeTask")
-    const { historyTasks = [] } = await browser.storage.local.get("historyTasks")
-
     const finishedTask = {
         name: activeTask.name,
         totalMs: activeTask.elapsedMs,
         finishedAt: new Date().toISOString()
     }
 
-    await browser.storage.local.set( {historyTasks: [...historyTasks, finishedTask] })
+    historyTasks = [finishedTask, ...historyTasks]
+    activeTask = null
+
+    await browser.storage.local.set( { historyTasks })
     await browser.storage.local.remove("activeTask")
 
-    hideDiscardButton()
-    hideSaveButton()
-    hideResumeButton()
-    showPauseButton()
+    hideElement(discardTaskButton)
+    hideElement(saveTaskButton)
+    hideElement(resumeTaskButton)
+    showElement(pauseTaskButton)
 
-    hideActiveTaskInfo()
-    hideActiveTaskActions()
-    showTaskPlaceholder()
+    hideElement(activeTaskInfo)
+    hideElement(activeTaskActions)
+    showElement(activeTaskPlaceholder)
 
     enableTaskForm()
-    showTasksHistory()
+    showHistoryTasks()
+
+    setIcon("idle")
 }
 
 async function discardTask() {
+    activeTask = null
     await browser.storage.local.remove("activeTask")
 
-    hideDiscardButton()
-    hideSaveButton()
-    hideResumeButton()
-    showPauseButton()
+    hideElement(discardTaskButton)
+    hideElement(saveTaskButton)
+    hideElement(resumeTaskButton)
+    showElement(pauseTaskButton)
 
-    hideActiveTaskInfo()
-    hideActiveTaskActions()
-    showTaskPlaceholder()
+    hideElement(activeTaskInfo)
+    hideElement(activeTaskActions)
+    showElement(activeTaskPlaceholder)
 
     enableTaskForm()
+
+    setIcon("idle")
 }
 
-async function showActiveTask() {
-    const { activeTask } = await browser.storage.local.get("activeTask")
+async function deleteTask(event) {
+    if (!event.target.matches("button[data-finished-at]")) return
 
+    const finishedAt = event.target.dataset.finishedAt
+    
+    historyTasks = historyTasks.filter(task => task.finishedAt !== finishedAt)
+    await browser.storage.local.set({ historyTasks })
+    showHistoryTasks()
+}
+
+function showActiveTask() {
     if (activeTask) {
         disableTaskForm()
 
-        showActiveTaskInfo()
-        showActiveTaskActions()
-        hideTaskPlaceholder()
+        showElement(activeTaskInfo)
+        showElement(activeTaskActions)
+        hideElement(activeTaskPlaceholder)
 
         activeTaskName.textContent = activeTask.name
 
@@ -248,24 +235,35 @@ async function showActiveTask() {
         if (activeTask.isRunning) {
             startTimer(activeTask)
         } else {
-            hidePauseButton()
-            showResumeButton()
-            showSaveButton()
-            showDiscardButton()
+            hideElement(pauseTaskButton)
+            showElement(resumeTaskButton)
+            showElement(saveTaskButton)
+            showElement(discardTaskButton)
         }
     } else {
-        activeTaskInfo.style.display = "none"
-        activeTaskActions.style.display = "none"
-        noActiveTask.style.display = ""
+        hideElement(activeTaskInfo)
+        hideElement(activeTaskActions)
+        showElement(activeTaskPlaceholder)
     }
 }
 
 function formatTasksAsHTML(tasksByDays) {
     const history = Object.values(tasksByDays).map(date => {
-        let dateHTML = `<h3 class="history-date" datetime=${date.taskDatetime}>${date.dateName}</h3>`
+        let dateHTML = `
+        <div class="history-date-container">
+            <h3 class="history-date" datetime=${date.taskDatetime}>${date.dateName}</h3>
+            <p>${formatDurationForHistory(date.dayTotalMs)}</p>     
+        </div>`
         
         const tasksList = date.tasks.map(task => {
-            return `<li><span>${task.name}</span><time datetime=${task.duration}>${task.duration}</time>`
+            return `
+            <li>
+                <span>${task.name}</span>
+                <div class="history-time-container">
+                    <time datetime=${task.duration}>${task.duration}</time>
+                    <button id="task-delete" data-finished-at="${task.finishedAt}" aria-label="Delete task">X</button>
+                </div>
+            </li>`
         }).join('')
         const tasksHTML = `<ul class="history-task-list">${tasksList}</ul>`
 
@@ -276,10 +274,9 @@ function formatTasksAsHTML(tasksByDays) {
     return history.join('')
 }
 
-async function showTasksHistory() {
-    const { historyTasks = [] } = await browser.storage.local.get("historyTasks")
+function showHistoryTasks() {
     if (historyTasks.length === 0) {
-        showHistoryPlaceholder()
+        historyContainer.innerHTML = `<p class="history-empty">Empty</p>`
         return
     }
 
@@ -289,17 +286,21 @@ async function showTasksHistory() {
 
         const taskForHistory = {
             name: task.name,
-            duration: formatTaskDuration(task.totalMs)
+            duration: formatDurationForHistory(task.totalMs),
+            finishedAt: task.finishedAt
         } 
 
         if (!result[taskDatetime]) {
             const dateName = formatDateLong(taskDate)        
+            const dayTotalMs = task.totalMs
             result[taskDatetime] = {
                 dateName,
                 taskDatetime,
+                dayTotalMs,
                 tasks: [taskForHistory]
             }
         } else {
+            result[taskDatetime].dayTotalMs += task.totalMs
             result[taskDatetime].tasks.push(taskForHistory)            
         }
 
@@ -308,8 +309,18 @@ async function showTasksHistory() {
 
     const historyHTML = formatTasksAsHTML(tasksByDays)
 
-    hideHistoryPlaceholder()
     historyContainer.innerHTML = historyHTML
+}
+
+async function init() {
+    const activeTaskResult = await browser.storage.local.get("activeTask")
+    activeTask = activeTaskResult.activeTask || null
+
+    const historyTasksResult = await browser.storage.local.get("historyTasks")
+    historyTasks = historyTasksResult.historyTasks || []
+
+    showActiveTask()
+    showHistoryTasks()
 }
 
 const taskInputForm = document.getElementById("task-input-form")
@@ -318,7 +329,7 @@ const taskStart = document.getElementById("task-start")
 
 const activeTaskInfo = document.getElementById("active-task-info")
 const activeTaskActions = document.getElementById("active-task-actions")
-const noActiveTask = document.getElementById("no-active-task")
+const activeTaskPlaceholder = document.getElementById("active-task-placeholder")
 const activeTaskName = document.getElementById("active-task-name")
 const activeTaskTime = document.getElementById("active-task-time")
 
@@ -328,9 +339,10 @@ const saveTaskButton = document.getElementById("task-save")
 const discardTaskButton = document.getElementById("task-discard")
 
 const historyContainer = document.getElementById("history-container")
-const historyEmpty = document.getElementById("history-empty")
 
-let timeoutId
+let intervalId = null
+let activeTask = null
+let historyTasks = []
 
 taskInputForm.addEventListener("submit", startTask)
 pauseTaskButton.addEventListener("click", pauseTimer)
@@ -338,5 +350,6 @@ resumeTaskButton.addEventListener("click", resumeTimer)
 discardTaskButton.addEventListener("click", discardTask)
 saveTaskButton.addEventListener("click", saveTask)
 
-showActiveTask()
-showTasksHistory()
+historyContainer.addEventListener("click", deleteTask)
+
+init()
