@@ -27,17 +27,26 @@
     box-sizing: border-box;
 }
 
+html {
+    font-size: 16px;
+}
+
 body {
     padding: 1rem;
     width: 400px;
     display: flex;
     flex-direction: column;
     font-family: "Inter", sans-serif;
+    font-size: 100%;
 }
 
 body > section {
     width: 100%;
 }
+
+/* p {
+    font-size: 1rem;
+} */
 
 button:hover {
     cursor: pointer;
@@ -48,7 +57,7 @@ button:disabled {
 }
 
 .divider {
-    color: var(--secondary);
+    border-color: var(--secondary);
     margin: 0.75rem 0;
 }
 
@@ -112,6 +121,7 @@ button:disabled {
 .active-task-actions > button {
     font-weight: 500;
     font-size: inherit;
+    font-family: inherit;
     padding: 0.3rem 0.75rem;
     border-radius: var(--default-radius);
 }
@@ -204,12 +214,12 @@ button:disabled {
     justify-content: space-between;
     align-items: center;
     font-size: 1.2rem;
-}
-
-.history-date {
     margin-top: 0.8rem;
     margin-bottom: 0.3rem;
-    font-size: 1.2rem;
+}
+
+.history-date-container > time {
+    font-variant-numeric: tabular-nums;
 }
 
 .history-task-list {
@@ -244,7 +254,6 @@ button:disabled {
 
 .history-time-container > time {
     font-variant-numeric: tabular-nums;
-
     transition: transform 0.2s ease;
 }
 

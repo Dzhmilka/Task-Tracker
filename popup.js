@@ -23,7 +23,7 @@ function setIcon(state) {
             }
     }
 
-    browser.browserAction.setIcon({ path })
+    ext.action.setIcon({ path })
 }
 
 function hideElement(element) {
@@ -32,12 +32,6 @@ function hideElement(element) {
 
 function showElement(element) {
     element.classList.remove("hidden")
-}
-
-function escapeHTML(str) {
-    const div = document.createElement("div")
-    div.textContent = str
-    return div.innerHTML
 }
 
 function formatDateLong(date) {
@@ -59,6 +53,25 @@ function formatDurationForHistory(totalMs) {
     }
 
     return `${hours}h ${minutes}m`
+}
+
+function formatDatetimeForHistory(ms) {
+    const totalSeconds = Math.floor(ms / 1000)
+
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3000) / 60)
+
+    let result = "PT"
+
+    if (hours > 0) {
+        result += `${hours}H`
+    }
+
+    if (minutes > 0 || hours === 0) {
+        result += `${minutes}M`
+    }
+
+    return result
 }
 
 function disableTaskForm() {
@@ -90,7 +103,7 @@ async function startTask(event) {
         isRunning: true
     }
 
-    await browser.storage.local.set({ activeTask })
+    await ext.storage.local.set({ activeTask })
     taskInput.value = ""
     showActiveTask()
 }
@@ -131,7 +144,7 @@ async function pauseTimer() {
 
     setIcon("paused")
 
-    await browser.storage.local.set({activeTask})
+    await ext.storage.local.set({activeTask})
 }
 
 async function resumeTimer() {
@@ -143,7 +156,7 @@ async function resumeTimer() {
     hideElement(saveTaskButton)
     hideElement(discardTaskButton)
 
-    await browser.storage.local.set({activeTask})
+    await ext.storage.local.set({activeTask})
     startTimer(activeTask)
 }
 
@@ -174,8 +187,8 @@ async function saveTask() {
     historyTasks = [finishedTask, ...historyTasks]
     activeTask = null
 
-    await browser.storage.local.set( { historyTasks })
-    await browser.storage.local.remove("activeTask")
+    await ext.storage.local.set( { historyTasks })
+    await ext.storage.local.remove("activeTask")
 
     hideElement(discardTaskButton)
     hideElement(saveTaskButton)
@@ -194,7 +207,7 @@ async function saveTask() {
 
 async function discardTask() {
     activeTask = null
-    await browser.storage.local.remove("activeTask")
+    await ext.storage.local.remove("activeTask")
 
     hideElement(discardTaskButton)
     hideElement(saveTaskButton)
@@ -216,7 +229,7 @@ async function deleteTask(event) {
     const finishedAt = event.target.dataset.finishedAt
     
     historyTasks = historyTasks.filter(task => task.finishedAt !== finishedAt)
-    await browser.storage.local.set({ historyTasks })
+    await ext.storage.local.set({ historyTasks })
     showHistoryTasks()
 }
 
@@ -252,7 +265,7 @@ function formatTasksAsHTML(tasksByDays) {
         let dateHTML = `
         <div class="history-date-container">
             <h3 class="history-date" datetime=${date.taskDatetime}>${date.dateName}</h3>
-            <p>${formatDurationForHistory(date.dayTotalMs)}</p>     
+            <time datetime=${date.dayTotalDatetime}>${date.dayTotal}</time>     
         </div>`
         
         const tasksList = date.tasks.map(task => {
@@ -260,7 +273,7 @@ function formatTasksAsHTML(tasksByDays) {
             <li>
                 <span>${task.name}</span>
                 <div class="history-time-container">
-                    <time datetime=${task.duration}>${task.duration}</time>
+                    <time datetime=${task.datetime}>${task.duration}</time>
                     <button id="task-delete" data-finished-at="${task.finishedAt}" aria-label="Delete task">X</button>
                 </div>
             </li>`
@@ -282,21 +295,25 @@ function showHistoryTasks() {
 
     const tasksByDays = historyTasks.reduce((result, task) => {
         const taskDate = new Date(task.finishedAt) 
-        const taskDatetime = `${taskDate.getFullYear()}-${taskDate.getMonth() + 1}-${taskDate.getDate()}`
+        const taskMonth = (taskDate.getMonth() + 1).toString().padStart(2, "0")
+        const taskDatetime = `${taskDate.getFullYear()}-${taskMonth}-${taskDate.getDate()}`
 
         const taskForHistory = {
             name: task.name,
             duration: formatDurationForHistory(task.totalMs),
+            datetime: formatDatetimeForHistory(task.totalMs),
             finishedAt: task.finishedAt
         } 
 
         if (!result[taskDatetime]) {
             const dateName = formatDateLong(taskDate)        
-            const dayTotalMs = task.totalMs
+            const dayTotal = formatDurationForHistory(task.totalMs)
+            const dayTotalDatetime = formatDatetimeForHistory(task.totalMs)
             result[taskDatetime] = {
                 dateName,
                 taskDatetime,
-                dayTotalMs,
+                dayTotal,
+                dayTotalDatetime,
                 tasks: [taskForHistory]
             }
         } else {
@@ -313,10 +330,10 @@ function showHistoryTasks() {
 }
 
 async function init() {
-    const activeTaskResult = await browser.storage.local.get("activeTask")
+    const activeTaskResult = await ext.storage.local.get("activeTask")
     activeTask = activeTaskResult.activeTask || null
 
-    const historyTasksResult = await browser.storage.local.get("historyTasks")
+    const historyTasksResult = await ext.storage.local.get("historyTasks")
     historyTasks = historyTasksResult.historyTasks || []
 
     showActiveTask()
@@ -339,6 +356,8 @@ const saveTaskButton = document.getElementById("task-save")
 const discardTaskButton = document.getElementById("task-discard")
 
 const historyContainer = document.getElementById("history-container")
+
+const ext = window.browser ?? window.chrome
 
 let intervalId = null
 let activeTask = null
