@@ -43,7 +43,7 @@ function formatDateLong(date) {
 }
 
 function formatDurationForHistory(totalMs) {
-    const totalMinutes = Math.floor(totalMs / 60000)
+    const totalMinutes = Math.round(totalMs / 60000)
 
     const hours = Math.floor(totalMinutes / 60)
     const minutes = totalMinutes % 60
@@ -56,10 +56,10 @@ function formatDurationForHistory(totalMs) {
 }
 
 function formatDatetimeForHistory(ms) {
-    const totalSeconds = Math.floor(ms / 1000)
+    const totalSeconds = Math.round(ms / 1000)
 
     const hours = Math.floor(totalSeconds / 3600)
-    const minutes = Math.floor((totalSeconds % 3000) / 60)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
 
     let result = "PT"
 
@@ -265,7 +265,7 @@ function formatTasksAsHTML(tasksByDays) {
         let dateHTML = `
         <div class="history-date-container">
             <h3 class="history-date" datetime=${date.taskDatetime}>${date.dateName}</h3>
-            <time datetime=${date.dayTotalDatetime}>${date.dayTotal}</time>     
+            <time datetime=${formatDatetimeForHistory(date.dayTotalMs)}>${formatDurationForHistory(date.dayTotalMs)}</time>     
         </div>`
         
         const tasksList = date.tasks.map(task => {
@@ -307,13 +307,10 @@ function showHistoryTasks() {
 
         if (!result[taskDatetime]) {
             const dateName = formatDateLong(taskDate)        
-            const dayTotal = formatDurationForHistory(task.totalMs)
-            const dayTotalDatetime = formatDatetimeForHistory(task.totalMs)
             result[taskDatetime] = {
                 dateName,
                 taskDatetime,
-                dayTotal,
-                dayTotalDatetime,
+                dayTotalMs: task.totalMs,
                 tasks: [taskForHistory]
             }
         } else {

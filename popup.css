@@ -3,9 +3,11 @@
     --primary-text: rgb(0, 0, 0);
 
     --secondary: rgb(255, 102, 0);
-    --secondary-hover: rgb(242, 96, 0);
-    --secondary-active: rgb(225, 85, 0);
+    --secondary-hover: rgb(230, 85, 0);
+    --secondary-active: rgb(200, 70, 0);
     --secondary-text: rgb(255, 255, 255);
+
+    --test: hsl(24, 100%, 50%);
 
     --danger: rgb(220, 38, 38);
     --danger-hover: rgb(200, 30, 30);
@@ -214,8 +216,7 @@ button:disabled {
     justify-content: space-between;
     align-items: center;
     font-size: 1.2rem;
-    margin-top: 0.8rem;
-    margin-bottom: 0.3rem;
+    margin: 0.5rem 0;
 }
 
 .history-date-container > time {
