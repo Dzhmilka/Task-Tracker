@@ -260,40 +260,8 @@ function showActiveTask() {
     }
 }
 
-function formatTasksAsHTML(tasksByDays) {
-    const history = Object.values(tasksByDays).map(date => {
-        let dateHTML = `
-        <div class="history-date-container">
-            <h3 class="history-date" datetime=${date.taskDatetime}>${date.dateName}</h3>
-            <time datetime=${formatDatetimeForHistory(date.dayTotalMs)}>${formatDurationForHistory(date.dayTotalMs)}</time>     
-        </div>`
-        
-        const tasksList = date.tasks.map(task => {
-            return `
-            <li>
-                <span>${task.name}</span>
-                <div class="history-time-container">
-                    <time datetime=${task.datetime}>${task.duration}</time>
-                    <button id="task-delete" data-finished-at="${task.finishedAt}" aria-label="Delete task">X</button>
-                </div>
-            </li>`
-        }).join('')
-        const tasksHTML = `<ul class="history-task-list">${tasksList}</ul>`
-
-        dateHTML += tasksHTML
-        return dateHTML
-    })
-
-    return history.join('')
-}
-
-function showHistoryTasks() {
-    if (historyTasks.length === 0) {
-        historyContainer.innerHTML = `<p class="history-empty">Empty</p>`
-        return
-    }
-
-    const tasksByDays = historyTasks.reduce((result, task) => {
+function groupTasksByDay(tasks) {
+    return tasks.reduce((result, task) => {
         const taskDate = new Date(task.finishedAt) 
         const taskMonth = (taskDate.getMonth() + 1).toString().padStart(2, "0")
         const taskDatetime = `${taskDate.getFullYear()}-${taskMonth}-${taskDate.getDate()}`
@@ -321,9 +289,63 @@ function showHistoryTasks() {
         return result
     }, {})
 
-    const historyHTML = formatTasksAsHTML(tasksByDays)
+}
 
-    historyContainer.innerHTML = historyHTML
+function showHistoryTasks() {
+    historyContainer.replaceChildren()
+
+    if (historyTasks.length === 0) {
+        const p = document.createElement("p")
+        p.className = "history-empty"
+        p.textContent = "Empty"
+        historyContainer.appendChild(p)
+        return
+    }
+
+    const tasksByDays = groupTasksByDay(historyTasks)
+    
+    for (const date of Object.values(tasksByDays)) {
+        const dateContainer = document.createElement("div")
+        dateContainer.className = "history-date-container"
+
+        const h3 = document.createElement("h3")
+        h3.textContent = date.dateName
+
+        const totalTime = document.createElement("time")
+        totalTime.textContent = formatDurationForHistory(date.dayTotalMs)
+        totalTime.setAttribute("datetime", formatDatetimeForHistory(date.dayTotalMs))
+
+        dateContainer.append(h3, totalTime)
+
+        const ul = document.createElement("ul")
+        ul.className = "history-task-list"
+
+        console.log(date)
+        for (const task of date.tasks) {
+            const li = document.createElement("li")
+
+            const name = document.createElement("span")
+            name.textContent = task.name
+
+            const timeContainer = document.createElement("div")
+            timeContainer.className = "history-time-container"
+
+            const time = document.createElement("time")
+            time.textContent = task.duration
+            time.setAttribute("datetime", task.datetime)
+
+            const btn = document.createElement("button")
+            btn.textContent = "X"
+            btn.dataset.finishedAt = task.finishedAt
+            btn.setAttribute("aria-label", "Delete task")
+
+            timeContainer.append(time, btn)
+            li.append(name, timeContainer)
+            ul.appendChild(li)
+        }
+
+        historyContainer.append(dateContainer, ul)
+    }
 }
 
 async function init() {
