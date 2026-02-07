@@ -1,31 +1,3 @@
-function setIcon(state) {
-    let path
-
-    switch (state) {
-        case "running":
-            path = {
-                "16": "icons/timer-active-16.png",
-                "32": "icons/timer-active-32.png"
-            }
-            break
-
-        case "paused":
-            path = {
-                "16": "icons/timer-16.png",
-                "32": "icons/timer-32.png"
-            }
-            break
-
-        default:
-            path = {
-                "16": "icons/timer-idle-16.png",
-                "32": "icons/timer-idle-32.png"
-            }
-    }
-
-    ext.action.setIcon({ path })
-}
-
 function hideElement(element) {
     element.classList.add("hidden")
 }
@@ -119,7 +91,6 @@ function getTotalElapsedMs(activeTask) {
 function startTimer(activeTask) {
     stopTimer()
     intervalId = setInterval(() => updateTimer(activeTask), 250)
-    setIcon("running")
 }
 
 function stopTimer() {
@@ -141,8 +112,6 @@ async function pauseTimer() {
     showElement(resumeTaskButton)
     showElement(saveTaskButton)
     showElement(discardTaskButton)
-
-    setIcon("paused")
 
     await ext.storage.local.set({activeTask})
 }
@@ -201,8 +170,6 @@ async function saveTask() {
 
     enableTaskForm()
     showHistoryTasks()
-
-    setIcon("idle")
 }
 
 async function discardTask() {
@@ -219,8 +186,6 @@ async function discardTask() {
     showElement(activeTaskPlaceholder)
 
     enableTaskForm()
-
-    setIcon("idle")
 }
 
 async function deleteTask(event) {
