@@ -1,42 +1,40 @@
 {
-  "manifest_version": 3,
-  "name": "Task Tracker",
-  "version": "1.0.1",
-  "description": "Track time spent on your tasks.",
+    "manifest_version": 3,
+    "name": "Task Tracker",
+    "version": "1.0.2",
+    "description": "Track time spent on your tasks.",
 
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "task-tracker@github.dzhmilka",
-      "data_collection_permissions": {
-        "required": ["none"]
-      }
-    }
-  },
-
-  "icons": {
-    "16": "icons/timer-16.png",
-    "32": "icons/timer-32.png",
-    "48": "icons/timer-48.png",
-    "96": "icons/timer-96.png",
-    "128": "icons/timer-128.png"
-  },
-
-  "action": {
-    "default_icon": {
-      "16": "icons/timer-idle-16.png",
-      "32": "icons/timer-idle-32.png"
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "task-tracker@github.dzhmilka",
+            "data_collection_permissions": {
+                "required": ["none"]
+            }
+        }
     },
-    "default_title": "Task Tracker",
-    "default_popup": "popup.html"
-  },
 
-  "background": {
-    "service_worker": "background.js",
-    "scripts": ["background.js"],
-    "type": "module"
-  },
+    "icons": {
+        "16": "icons/timer-16.png",
+        "32": "icons/timer-32.png",
+        "48": "icons/timer-48.png",
+        "96": "icons/timer-96.png",
+        "128": "icons/timer-128.png"
+    },
 
-  "permissions": [
-    "storage"
-  ]
+    "action": {
+        "default_icon": {
+            "16": "icons/timer-idle-16.png",
+            "32": "icons/timer-idle-32.png"
+        },
+        "default_title": "Task Tracker",
+        "default_popup": "popup.html"
+    },
+
+    "background": {
+        "service_worker": "background.js",
+        "scripts": ["background.js"],
+        "type": "module"
+    },
+
+    "permissions": ["storage"]
 }
